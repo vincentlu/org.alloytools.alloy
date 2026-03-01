@@ -2168,7 +2168,16 @@ public final class A4Solution {
                     instanceDTO.values.put(name, fields);
                     SimTupleset singeAtomRelation = SimTupleset.make(sigAtom);
 
-                    for (Field field : s.getFields()) {
+                    // Collect fields from this sig and all ancestor sigs
+                    List<Field> allFields = new ArrayList<>();
+                    if (s instanceof Sig.PrimSig) {
+                        for (Sig.PrimSig cur = (Sig.PrimSig) s; cur != null && !cur.builtin; cur = cur.parent) {
+                            for (Field f : cur.getFields()) allFields.add(f);
+                        }
+                    } else {
+                        for (Field f : s.getFields()) allFields.add(f);
+                    }
+                    for (Field field : allFields) {
                         A4TupleSet eval = eval(field, state);
                         SimTupleset fieldRelation = Util.toSimTupleset(eval);
                         SimTupleset fieldValues = singeAtomRelation.join(fieldRelation);
