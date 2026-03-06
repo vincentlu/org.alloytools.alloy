@@ -274,6 +274,11 @@ public class CLI extends Env {
 						SolutionDTO solutionDTO = solution.toDTO();
 						commandReceipt.solution.add(solutionDTO);
 						generate(world, solution, options.type(OutputType.table), outdir, cname, index, solutionDTO);
+						// Always write XML alongside the chosen output format so that
+						// the "eval" command can load the solution later without re-solving.
+						if (outdir != null && options.type(OutputType.table) != OutputType.xml) {
+							generate(world, solution, OutputType.xml, outdir, cname, index, solutionDTO);
+						}
 						index++;
 						back = 5;
 					} while (index < repeat && solution.isIncremental() && (solution = solution.next()).satisfiable());
