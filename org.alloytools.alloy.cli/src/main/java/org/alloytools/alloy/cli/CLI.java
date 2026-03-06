@@ -420,6 +420,9 @@ public class CLI extends Env {
 			return;
 		}
 
+		// The same CompModule must be used for both A4SolutionReader.read() and
+		// expression parsing — eval() requires the Sig objects in the parsed
+		// expression to be the same instances that were bound by the reader.
 		SimpleReporter rep = new SimpleReporter(this);
 		Map<String, String> cache = new HashMap<>();
 		CompModule world = CompUtil.parseEverything_fromFile(rep, cache, sourceFilename);

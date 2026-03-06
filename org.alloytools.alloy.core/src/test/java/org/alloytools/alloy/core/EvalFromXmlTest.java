@@ -42,7 +42,10 @@ public class EvalFromXmlTest {
             A4SolutionWriter.writeInstance(null, sol, pw, Collections.emptyList(), Collections.emptyMap());
         }
 
-        // Load from XML and eval — same pattern as CLI eval command
+        // Load from XML and eval. The same CompModule must be used for both
+        // A4SolutionReader.read() and expression parsing — eval() requires the
+        // Sig objects in the parsed expression to be the same instances that
+        // were bound by the reader.
         CompModule evalWorld = CompUtil.parseEverything_fromString(A4Reporter.NOP, model);
         XMLNode xmlNode = new XMLNode(tmp);
         A4Solution loaded = A4SolutionReader.read(evalWorld.getAllReachableSigs(), xmlNode);
@@ -81,7 +84,8 @@ public class EvalFromXmlTest {
             A4SolutionWriter.writeInstance(null, sol, pw, Collections.emptyList(), Collections.emptyMap());
         }
 
-        // Load from XML and eval at different states
+        // Load from XML and eval at different states. Same CompModule
+        // constraint as above — reader and expression parser must share sigs.
         CompModule evalWorld = CompUtil.parseEverything_fromString(A4Reporter.NOP, model);
         XMLNode xmlNode = new XMLNode(tmp);
         A4Solution loaded = A4SolutionReader.read(evalWorld.getAllReachableSigs(), xmlNode);
