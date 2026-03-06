@@ -45,8 +45,11 @@ import edu.mit.csail.sdg.parser.CompUtil;
 import edu.mit.csail.sdg.sim.SimTupleset;
 import edu.mit.csail.sdg.translator.A4Options;
 import edu.mit.csail.sdg.translator.A4Solution;
+import edu.mit.csail.sdg.translator.A4SolutionReader;
 import edu.mit.csail.sdg.translator.A4SolutionWriter;
 import edu.mit.csail.sdg.translator.TranslateAlloyToKodkod;
+import edu.mit.csail.sdg.alloy4.XMLNode;
+import edu.mit.csail.sdg.ast.Expr;
 import kodkod.engine.satlab.SATFactory;
 
 /**
@@ -388,6 +391,67 @@ public class CLI extends Env {
 		int n = 0;
 		for (Command c : world.getAllCommands()) {
 			stdout.printf("%-2d. %s%n", n++, c);
+		}
+	}
+
+	@Arguments(arg = {"source", "solution", "expression..."})
+	@Description("Evaluate expressions against a saved solution XML file")
+	interface EvalOptions extends Options {
+		@Description("The state index to evaluate against (default 0)")
+		int state(int deflt);
+	}
+
+	@Description("Evaluate expressions against a saved solution XML file. "
+			+ "Requires the source .als file and the solution .xml file. "
+			+ "Expressions are provided as remaining arguments.")
+	public void _eval(EvalOptions options) throws Exception {
+		List<String> args = options._arguments();
+		String sourceFilename = args.remove(0);
+		String xmlFilename = args.remove(0);
+
+		File sourceFile = IO.getFile(sourceFilename);
+		if (!sourceFile.canRead()) {
+			error("Cannot read source file %s", sourceFile);
+			return;
+		}
+		File xmlFile = IO.getFile(xmlFilename);
+		if (!xmlFile.canRead()) {
+			error("Cannot read solution file %s", xmlFile);
+			return;
+		}
+
+		SimpleReporter rep = new SimpleReporter(this);
+		Map<String, String> cache = new HashMap<>();
+		CompModule world = CompUtil.parseEverything_fromFile(rep, cache, sourceFilename);
+
+		XMLNode xmlNode = new XMLNode(xmlFile);
+		A4Solution sol = A4SolutionReader.read(world.getAllReachableSigs(), xmlNode);
+
+		int state = options.state(0);
+		if (state < 0 || state >= sol.getTraceLength()) {
+			error("State %d is out of range, trace length is %d (valid: 0-%d)",
+					state, sol.getTraceLength(), sol.getTraceLength() - 1);
+			return;
+		}
+
+		world.clearGlobals();
+		for (ExprVar a : sol.getAllAtoms()) {
+			world.addGlobal(a.label, a);
+		}
+		for (ExprVar a : sol.getAllSkolems()) {
+			world.addGlobal(a.label, a);
+		}
+
+		for (String exprStr : args) {
+			Expr e = world.parseOneExpressionFromString(exprStr);
+			Object result = sol.eval(e, state);
+			if (result != null) {
+				String s = result.toString();
+				if (TableView.isTable(s)) {
+					result = TableView.toTable(s, false);
+				}
+			}
+			stdout.println(result);
 		}
 	}
 
