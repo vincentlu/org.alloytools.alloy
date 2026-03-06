@@ -1757,6 +1757,22 @@ public final class A4Solution {
     // [electrum] cache per state
     private final Map<Integer,String> toStringCache = new HashMap<Integer,String>();
 
+    /**
+     * Returns all fields for a sig, including fields inherited from ancestor
+     * sigs. {@code Sig.getFields()} only returns directly declared fields.
+     */
+    public static List<Field> getAllFields(Sig s) {
+        List<Field> allFields = new ArrayList<>();
+        if (s instanceof PrimSig) {
+            for (PrimSig cur = (PrimSig) s; cur != null && !cur.builtin; cur = cur.parent) {
+                for (Field f : cur.getFields()) allFields.add(f);
+            }
+        } else {
+            for (Field f : s.getFields()) allFields.add(f);
+        }
+        return allFields;
+    }
+
     /** Dumps the Kodkod solution into String. */
     @Override
     public String toString() {
@@ -1781,7 +1797,7 @@ public final class A4Solution {
                     sb.append("------State " + i + (i == getLoopState() ? " (loop)" : "") + "-------\n");
                     for (Sig s : sigs) {
                         sb.append(s.label).append("=").append(eval(s, i)).append("\n");
-                        for (Field f : s.getFields())
+                        for (Field f : getAllFields(s))
                             sb.append(s.label).append("<:").append(f.label).append("=").append(eval(f, i)).append("\n");
                     }
                     for (ExprVar v : skolems) {
@@ -1799,7 +1815,7 @@ public final class A4Solution {
 
                 for (Sig s : sigs) {
                     sb.append(s.label).append("=").append(eval(s, state)).append("\n");
-                    for (Field f : s.getFields())
+                    for (Field f : getAllFields(s))
                         sb.append(s.label).append("<:").append(f.label).append("=").append(eval(f, state)).append("\n");
                 }
                 for (ExprVar v : skolems) {
@@ -2168,16 +2184,7 @@ public final class A4Solution {
                     instanceDTO.values.put(name, fields);
                     SimTupleset singeAtomRelation = SimTupleset.make(sigAtom);
 
-                    // Collect fields from this sig and all ancestor sigs
-                    List<Field> allFields = new ArrayList<>();
-                    if (s instanceof Sig.PrimSig) {
-                        for (Sig.PrimSig cur = (Sig.PrimSig) s; cur != null && !cur.builtin; cur = cur.parent) {
-                            for (Field f : cur.getFields()) allFields.add(f);
-                        }
-                    } else {
-                        for (Field f : s.getFields()) allFields.add(f);
-                    }
-                    for (Field field : allFields) {
+                    for (Field field : getAllFields(s)) {
                         A4TupleSet eval = eval(field, state);
                         SimTupleset fieldRelation = Util.toSimTupleset(eval);
                         SimTupleset fieldValues = singeAtomRelation.join(fieldRelation);

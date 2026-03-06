@@ -94,4 +94,38 @@ public class A4SolutionTest {
         }
         assertTrue("Subset sig atom should have 'age' field from Animal", foundYoung);
     }
+
+    @Test
+    public void testToStringInheritedFieldsPresent() {
+        A4Solution sol = solve(
+            "sig Name {}\n" +
+            "sig Animal { name: one Name }\n" +
+            "sig Dog extends Animal { friend: lone Dog }\n" +
+            "run { some Dog } for 3\n"
+        );
+        assertTrue(sol.satisfiable());
+        String text = sol.toString();
+        // Dog should show its own field and the inherited field from Animal
+        assertTrue("toString should include Dog's own 'friend' field",
+            text.contains("this/Dog<:friend="));
+        assertTrue("toString should include inherited 'name' field under Dog",
+            text.contains("this/Dog<:name="));
+    }
+
+    @Test
+    public void testFormatInheritedFieldsPresent() {
+        A4Solution sol = solve(
+            "sig Animal { legs: one Int }\n" +
+            "sig Dog extends Animal { friend: lone Dog }\n" +
+            "run { some Dog } for 3\n"
+        );
+        assertTrue(sol.satisfiable());
+        // format() uses TableView.toTable(), same path as -t text in CLI.
+        // Dog's table should list both its own 'friend' and inherited 'legs'.
+        String text = sol.format(0);
+        assertTrue("format() should include Dog's own 'friend' field, got: " + text,
+            text.contains("friend"));
+        assertTrue("format() should include inherited 'legs' field for Dog, got: " + text,
+            text.contains("legs"));
+    }
 }

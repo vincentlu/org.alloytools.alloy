@@ -173,14 +173,15 @@ public class TableView {
                 sortTuple(instancesArray);
 
                 SimTupleset sigInstances = SimTupleset.make(instancesArray);
-                Table table = new Table(sigInstances.size() + 1, s.getFields().size() + 1, 1);
+                List<Field> allFields = A4Solution.getAllFields(s);
+                Table table = new Table(sigInstances.size() + 1, allFields.size() + 1, 1);
                 table.set(0, 0, s.label);
 
-                if (s.getFields().size() == 0 && sigInstances.size() < 1)
+                if (allFields.size() == 0 && sigInstances.size() < 1)
                     continue;
 
                 int c = 1;
-                for (Field f : s.getFields()) {
+                for (Field f : allFields) {
                     table.set(0, c++, f.label);
                 }
 
@@ -192,7 +193,7 @@ public class TableView {
 
                     table.set(r, 0, sigInstance.get(0));
                     c = 1;
-                    for (Field f : s.getFields()) {
+                    for (Field f : allFields) {
 
                         SimTupleset relations = Util.toSimTupleset(solution.eval(f, state));
                         SimTupleset joined = leftJoin.join(relations);
